@@ -1,6 +1,6 @@
 # services-deployment
 
-Stack local de Peaker con Docker Compose: los cuatro microservicios, sus bases de datos,
+Stack local de Ascenda con Docker Compose: los cuatro microservicios, sus bases de datos,
 RabbitMQ, el gateway y el portal web. Ver `.claude/docs/DESIGN.md` §10.
 
 ## Puesta en marcha
@@ -81,8 +81,8 @@ validaciones con `ValidateOnStart`: el flag y los secretos se ponen en el mismo 
   probar en local. Comprobar con `dig +short <dominio>` y `dig +short api.<dominio>`.
 - Puertos **80 y 443 abiertos** (`sudo ufw status` y, si está activado, el Network Firewall del panel
   de OVH). El 80 **no se puede cerrar después**: se necesita en cada renovación.
-- `services-deployment/.env` creado a partir de `.env.example`, con `PEAKER_DOMAIN`,
-  `PEAKER_API_DOMAIN`, `NEXT_PUBLIC_SITE_URL`, los `LEGAL_*` y, si ya hay proveedor de teselas, las
+- `services-deployment/.env` creado a partir de `.env.example`, con `ASCENDA_DOMAIN`,
+  `ASCENDA_API_DOMAIN`, `NEXT_PUBLIC_SITE_URL`, los `LEGAL_*` y, si ya hay proveedor de teselas, las
   dos `NEXT_PUBLIC_MAP_*`.
 
 Hacen falta **dos nombres**, no uno: `GATEWAY_URL` no lleva prefijo `NEXT_PUBLIC_`, así que solo lo
@@ -114,7 +114,7 @@ hace el baile completo contra su entorno de pruebas sin gastar cuota real.
 # Ensayo. Si esto falla, el DNS o el puerto 80 no están bien.
 docker compose -f docker-compose.yml -f docker-compose.bootstrap.yml \
   run --rm certbot certonly --webroot -w /var/www/certbot \
-  -d "$PEAKER_DOMAIN" -d "$PEAKER_API_DOMAIN" \
+  -d "$ASCENDA_DOMAIN" -d "$ASCENDA_API_DOMAIN" \
   --email <correo> --agree-tos --no-eff-email --dry-run
 
 # De verdad: el mismo comando sin --dry-run.
@@ -137,7 +137,7 @@ TLS no es solo el certificado. Hay URLs incrustadas en varios sitios y ninguna s
 | " | `EmailConfirmation__PasswordResetLinkTemplate` | `https://<dominio>/reset-password?token={token}` |
 | " | `EmailConfirmation__Smtp__*` | el relay de OVH: `ssl0.ovh.net`, `587`, `StartTls`, con credenciales |
 | `.env` (raíz) | `NEXT_PUBLIC_SITE_URL` | `https://<dominio>` — **build arg** |
-| `peaker-mobile/app/.env` | `VITE_GATEWAY_URL` | `https://api.<dominio>` |
+| `mobile/app/.env` | `VITE_GATEWAY_URL` | `https://api.<dominio>` |
 | " | `VITE_SITE_URL` | `https://<dominio>` |
 
 `AUTH_COOKIE_SECURE` no está en esa tabla porque **no hay que tocarla**: vale `false` en
@@ -161,7 +161,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 El `ingress` pasa a montar `config/nginx/prod/`, con los dos `server` de 443. Las plantillas las
 rellena el propio entrypoint de la imagen de nginx pasando `envsubst` sobre
-`/etc/nginx/templates/*.template`; `NGINX_ENVSUBST_FILTER=^PEAKER_` limita la sustitución a nuestras
+`/etc/nginx/templates/*.template`; `NGINX_ENVSUBST_FILTER=^ASCENDA_` limita la sustitución a nuestras
 dos variables, para que `$host`, `$remote_addr` y `$connection_upgrade` lleguen intactos a nginx.
 
 El `command` del `ingress` recarga nginx cada 6 h. No es decorativo: nginx **no relee el certificado
@@ -177,7 +177,7 @@ curl -sI https://<dominio>/swagger            # 404: Production apaga Swagger
 ```
 
 La prueba que de verdad cierra el despliegue no es un `curl`: **login en el portal, y comprobar en las
-DevTools que `peaker_at` llega con `Secure` y que la sesión sobrevive a recargar la página.** El
+DevTools que `ascenda_at` llega con `Secure` y que la sesión sobrevive a recargar la página.** El
 portal fija `secure` en función de `NODE_ENV`, que ya vale `production`, así que sobre `http://` el
 navegador descarta la cookie en silencio: el login responde 200 y el usuario sigue anónimo.
 
@@ -187,7 +187,7 @@ Las plantillas salen con `Strict-Transport-Security "max-age=300"`. Es deliberad
 cabecera de esta lista que no se puede deshacer.** Si publicas `max-age=31536000` y el certificado
 falla, los navegadores que ya vieron la cabecera se niegan a conectar durante un año.
 
-Una vez verificado el paso 4 y la renovación en seco, subirla en `config/nginx/prod/peaker.conf.template`
+Una vez verificado el paso 4 y la renovación en seco, subirla en `config/nginx/prod/ascenda.conf.template`
 —los dos bloques de 443— y recargar:
 
 ```
@@ -272,7 +272,7 @@ no tumba toda la autorización.
 ## Cambiar la audiencia de los JWT
 
 Cada servicio que valida tokens declara **su** audiencia en `Jwt__Audiences__0`
-—`peaker-gateway`, `peaker-account`, `peaker-ascent`— y `auth-service` emite el `aud` como array
+—`ascenda-gateway`, `ascenda-account`, `ascenda-ascent`— y `auth-service` emite el `aud` como array
 con todas ellas en `AuthToken__Audiences__n`, más `AuthToken__SelfAudience` para la suya. Así, cuando
 llegue un quinto servicio, los tokens ya emitidos **no valen** contra él hasta que se le añada su
 audiencia explícitamente. `peak-service` no aparece: es catálogo público y no monta autenticación.
@@ -283,7 +283,7 @@ patrón es el mismo que el de la rotación de clave, con una ventana de solapami
 1. Añadir la audiencia **nueva** al emisor, sin quitar la vieja, y reiniciar solo `auth-service`:
 
    ```
-   AuthToken__Audiences__0=peaker-gateway
+   AuthToken__Audiences__0=ascenda-gateway
    ...
    AuthToken__Audiences__4=<audiencia nueva>
    ```
@@ -324,7 +324,7 @@ recuento. La misma señal se publica como métrica (`ARCHITECTURE.md` §10).
 
 ```bash
 docker compose exec db-auth-service \
-  mysql -u <usuario> -p peaker_auth -e \
+  mysql -u <usuario> -p ascenda_auth -e \
   "SELECT id, type, attempt_count, error FROM outbox_messages WHERE processed_at_utc IS NULL AND attempt_count >= 12;"
 ```
 
