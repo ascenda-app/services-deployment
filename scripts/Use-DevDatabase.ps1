@@ -28,7 +28,7 @@ if ($MyInvocation.InvocationName -ne '.') {
     Write-Warning "Usa dot-sourcing o la variable no persistira en esta sesion: . .\scripts\Use-DevDatabase.ps1 $Service"
 }
 
-function Read-PeakerEnvFile {
+function Read-AscendaEnvFile {
     param([string] $Path)
 
     $values = @{}
@@ -47,7 +47,7 @@ function Read-PeakerEnvFile {
     return $values
 }
 
-function Get-PeakerRequiredValue {
+function Get-AscendaRequiredValue {
     param([hashtable] $Values, [string] $Name, [string] $EnvFile)
 
     if (-not $Values.ContainsKey($Name) -or [string]::IsNullOrWhiteSpace($Values[$Name])) {
@@ -71,18 +71,18 @@ if (-not (Test-Path -LiteralPath $envFile)) {
     throw "No existe $envFile. Copia config/$Service-service.env.example a config/$Service-service.env y completalo."
 }
 
-$values = Read-PeakerEnvFile -Path $envFile
+$values = Read-AscendaEnvFile -Path $envFile
 
 if ($target.Engine -eq 'MySQL') {
-    $database = Get-PeakerRequiredValue -Values $values -Name 'MYSQL_DATABASE' -EnvFile $envFile
-    $user = Get-PeakerRequiredValue -Values $values -Name 'MYSQL_USER' -EnvFile $envFile
-    $password = Get-PeakerRequiredValue -Values $values -Name 'MYSQL_PASSWORD' -EnvFile $envFile
+    $database = Get-AscendaRequiredValue -Values $values -Name 'MYSQL_DATABASE' -EnvFile $envFile
+    $user = Get-AscendaRequiredValue -Values $values -Name 'MYSQL_USER' -EnvFile $envFile
+    $password = Get-AscendaRequiredValue -Values $values -Name 'MYSQL_PASSWORD' -EnvFile $envFile
     $connectionString = "server=localhost;port=$($target.Port);database=$database;user=$user;password=$password"
 }
 else {
-    $database = Get-PeakerRequiredValue -Values $values -Name 'POSTGRES_DB' -EnvFile $envFile
-    $user = Get-PeakerRequiredValue -Values $values -Name 'POSTGRES_USER' -EnvFile $envFile
-    $password = Get-PeakerRequiredValue -Values $values -Name 'POSTGRES_PASSWORD' -EnvFile $envFile
+    $database = Get-AscendaRequiredValue -Values $values -Name 'POSTGRES_DB' -EnvFile $envFile
+    $user = Get-AscendaRequiredValue -Values $values -Name 'POSTGRES_USER' -EnvFile $envFile
+    $password = Get-AscendaRequiredValue -Values $values -Name 'POSTGRES_PASSWORD' -EnvFile $envFile
     $connectionString = "Server=localhost;Port=$($target.Port);Database=$database;Username=$user;Password=$password"
 }
 

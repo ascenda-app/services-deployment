@@ -1,6 +1,6 @@
 server {
     listen 80;
-    server_name ${PEAKER_DOMAIN} ${PEAKER_API_DOMAIN};
+    server_name ${ASCENDA_DOMAIN} ${ASCENDA_API_DOMAIN};
 
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;

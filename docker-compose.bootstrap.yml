@@ -1,11 +1,11 @@
-name: peaker-app
+name: ascenda
 
 services:
   ingress:
     environment:
-      PEAKER_DOMAIN: ${PEAKER_DOMAIN:?falta PEAKER_DOMAIN en services-deployment/.env}
-      PEAKER_API_DOMAIN: ${PEAKER_API_DOMAIN:?falta PEAKER_API_DOMAIN en services-deployment/.env}
-      NGINX_ENVSUBST_FILTER: '^PEAKER_'
+      ASCENDA_DOMAIN: ${ASCENDA_DOMAIN:?falta ASCENDA_DOMAIN en services-deployment/.env}
+      ASCENDA_API_DOMAIN: ${ASCENDA_API_DOMAIN:?falta ASCENDA_API_DOMAIN en services-deployment/.env}
+      NGINX_ENVSUBST_FILTER: '^ASCENDA_'
     ports: !override
       - '80:80'
     volumes: !override
