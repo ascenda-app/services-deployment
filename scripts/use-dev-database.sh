@@ -9,7 +9,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     exit 1
 fi
 
-peaker_use_dev_database() {
+ascenda_use_dev_database() {
     local service="$1"
     local key engine port
     local script_dir env_file database user password
@@ -33,21 +33,21 @@ peaker_use_dev_database() {
         return 1
     fi
 
-    peaker_read_env_value() {
+    ascenda_read_env_value() {
         sed -n "s/^[[:space:]]*$1=//p" "$env_file" | head -n 1 | tr -d '\r'
     }
 
     if [ "$engine" = 'mysql' ]; then
-        database="$(peaker_read_env_value MYSQL_DATABASE)"
-        user="$(peaker_read_env_value MYSQL_USER)"
-        password="$(peaker_read_env_value MYSQL_PASSWORD)"
+        database="$(ascenda_read_env_value MYSQL_DATABASE)"
+        user="$(ascenda_read_env_value MYSQL_USER)"
+        password="$(ascenda_read_env_value MYSQL_PASSWORD)"
     else
-        database="$(peaker_read_env_value POSTGRES_DB)"
-        user="$(peaker_read_env_value POSTGRES_USER)"
-        password="$(peaker_read_env_value POSTGRES_PASSWORD)"
+        database="$(ascenda_read_env_value POSTGRES_DB)"
+        user="$(ascenda_read_env_value POSTGRES_USER)"
+        password="$(ascenda_read_env_value POSTGRES_PASSWORD)"
     fi
 
-    unset -f peaker_read_env_value
+    unset -f ascenda_read_env_value
 
     if [ -z "$database" ] || [ -z "$user" ] || [ -z "$password" ]; then
         echo "Faltan credenciales en $env_file (usuario, contrasena o nombre de base de datos)." >&2
@@ -63,4 +63,4 @@ peaker_use_dev_database() {
     echo "ConnectionStrings__$key -> localhost:$port/$database (usuario: $user)"
 }
 
-peaker_use_dev_database "$1"
+ascenda_use_dev_database "$1"
